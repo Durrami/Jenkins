@@ -1,41 +1,39 @@
 pipeline {
     agent any
 
+     environment {
+         registry = "durrami/scd_lab_11"
+        DOCKER_CREDENTIALS ='8c231227-9fb5-4f4c-bb9c-20bae4c863fb'
+        dockerImage = ''
+    }
+
     stages {
-        // stage('Checkout') {
-        //     steps {
-        //         // Checkout code from GitHub
-        //         git 'https://github.com/Durrami/Jenkins.git/'
-        //     }
-        // }
-        stage('Dependency Installation') {
-            steps {
-                // Install frontend dependencies (assuming npm)
-                sh 'npm install'
-            }
-        }
         stage('Build Docker Image') {
             steps {
-                // Build Docker image
                 script {
-                    docker.build("your-image-name:latest", "-f Dockerfile .")
+                    // Build Docker image
+                    dockerImage = docker.build registry + ":$BUILD_NUMBER"
                 }
             }
         }
-        stage('Push Docker Image to Docker Hub') {
+        stage('Push Docker Image') {
             steps {
-                // Push Docker image to Docker Hub
                 script {
-                    docker.withRegistry('https://index.docker.io/v1/', 'dckr_pat_a84Zlx8y0447l83DD62q4R12TUw') {
-                        docker.image("your-image-name:latest").push("latest")
+                    // Login to Docker Hub
+                    docker.withRegistry('', DOCKER_CREDENTIALS) {
+                        // Push the built image to Docker Hub
+                        dockerImage.push()
                     }
                 }
             }
         }
-        stage('Run Docker Image') {
+
+        stage('Deploy') {
             steps {
-                // Run Docker image (assuming Docker Compose)
-                sh 'docker-compose up -d'
+                script {
+                    // Deploy using Docker Compose
+                    sh 'docker-compose up -d'
+                }
             }
         }
     }
